@@ -1,6 +1,6 @@
 import pandas as pd
 
-sampleSize = 100
+sampleSize = 200
 file = pd.read_csv('testpricedatashort_csv.csv', nrows=sampleSize)
 
 print("TEST", file.index)
@@ -14,34 +14,47 @@ startHighPrice = file['Price'].iloc[0]
 
 dayList = []
 dayDict = {}
-
-print("TEST3", startLowPrice, startHighPrice)
-print("TEST4", file['Price'].max())
-print(file)
-
 firstDayTemp = file['Time (local)'].iloc[0]
 firstDay = firstDayTemp[0:10]
-print("TEST5", firstDay)
 
-#This little for loop creates a dictionary 
+nextDayList = []
+nextDayDict = {}
+
+def createNewDay(newDay, newStart):
+    for index, row in file.iloc[newStart:].iterrows():
+        if row['Time (local)'][0:10] == newDay:
+            nextDayDict[index] = row
+            nextDayList.append(row)
+        else:
+            newDay = row['Time (local)'][0:10]
+            newStart = index
+            createNewDay(newDay, newStart)
+
+
+#This little for loop creates a dictionary of all rows which equal the first
+# day, the index where the next day starts is taken as a variable
 for index, row in file.iterrows():
     if row['Time (local)'][0:10] == firstDay:
         dayDict[index] = row
         dayList.append(row)
+    else:
+        print("Not 1 day", row['Time (local)'][0:10])
+        newDay = row['Time (local)'][0:10]
+        print("test inside", type(newDay))
+        newStart = index
+        print("HGHGHGHGHG", newStart)
+        createNewDay(newDay, newStart)
+        break
 
-#print("outside", dayDict)
-
+# The below are dataframes made from the list and dictionary created above
+# The 2 variable are the high and low prices from the list-derived df
 oneDay = pd.DataFrame.from_dict(dayDict)
 oneDayList = pd.DataFrame(dayList)
-#print("yep", oneDay)
-print("YET", oneDayList)
-print("max in df", oneDayList['Price'].max())
+currentLow = oneDayList['Price'].min()
+currentHigh = oneDayList['Price'].max()
 
+subset = file.loc[file['Time (local)'].str.contains(newDay)]
+print("Yep", subset)
+print("yep2", subset['Price'].min())
 
-""" def lowPoint():
-    for ind in file.index:
-        if file['Price'][ind] < startLowPrice:
-            newLow = file['Price'][ind]
-            print("test in function", newLow)
-
-lowPoint() """
+print("down here", nextDayDict)
